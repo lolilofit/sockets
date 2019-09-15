@@ -6,17 +6,19 @@
 #include<time.h>
 #include<netinet/in.h>
 #include<arpa/inet.h>
+#include<string.h>
 
 #define TIMEOUT 10
 
 struct adresses {
-	char[16] adr;
+	char adr[16];
 	struct adresses* next;
 };
 
 void add_adr(struct adresses* list, char* buf) {
 	struct adresses* new_adr = (struct adresses*)malloc(sizeof(struct adresses));
-	new_adr->adr = buf;
+//	new_adr->adr = buf;
+	sprintf(new_adr->adr, "%s", buf);
 	new_adr->next = NULL;
 	if(list == NULL) {
 		list = new_adr;
@@ -25,12 +27,12 @@ void add_adr(struct adresses* list, char* buf) {
 	struct adresses* cur = list;
 	while(cur->next != NULL)
 		cur  = cur->next;
-	cur->next = new_cur;
+	cur->next = new_adr;
 	return;
 }
 
 int find_adr(struct adresses* list, char *adr) {
-	strcut adresses* cur = list;
+	struct adresses* cur = list;
 	if(cur == NULL)
 		return 1;
 	while(cur) {
@@ -62,27 +64,28 @@ int main(int argc, char* argv[]) {
 	struct sockaddr_in adr, other_adr;
 	char buf[3];
 	long int time_now;
-	socketlen_t socklen;
+	socklen_t socklen;
 
-	sc = socket(AF_NET, sock_DGRAM, IPPROTO_UDP);
+	sc = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if(sc == -1) {
 		printf("can't create socket\n");
 		return 1;
 	}
-	memset(&adr, '0', sizeof(struct socketaddr_in));
-	adr.sun_family = AF_NET;
+	memset(&adr, '0', sizeof(adr));
+	adr.sin_family = AF_INET;
 	adr.sin_addr.s_addr = inet_addr("");
 	adr.sin_port = htons(8081);
 
-	memset(&other_adr, '0', sizeof(struct socketaddr_in));
-	other_adr.sun_family = AF_NET;
-	other_adr.sun_addr.s_addr = inet_addr("255.255.255.255");
+	memset(&other_adr, '0', sizeof(other_adr));
+	other_adr.sin_family = AF_INET;
+	other_adr.sin_addr.s_addr = inet_addr("255.255.255.255");
 	other_adr.sin_port = htons(8081);
 	
 	int count = 0;
 	bind(sc, (struct sockaddr*)&adr, sizeof(adr));
 	while(1) {
-		sendto(sc, "1", 1, (struct sockaddr*)&other_adr, sizeof(other_adr));
+		char mes[] = "1";
+		sendto(sc, mes, 1, 0, (struct sockaddr*)&other_adr, sizeof(other_adr));
 		count = 0;
 		time_now = time(NULL);
 		while((time(NULL) - time_now) < TIMEOUT) {
@@ -90,7 +93,7 @@ int main(int argc, char* argv[]) {
 				printf("err\n");
 				return 2;
 			}
-			add_adr(tmp, inet_ntoa(other_adr.sun_addr.s_addr));
+			add_adr(tmp, inet_ntoa(other_adr.sin_addr));
 			count++;
 		}
 		struct adresses* cur = tmp;
@@ -102,6 +105,12 @@ int main(int argc, char* argv[]) {
 			cur = cur->next;
 		}
 		delete_adr(tmp);
+		cur = list_adr;
+		while(cur) {
+			printf(cur->adr);
+			cur = cur->next;
+		}
+		printf("------------");
 	}
 	return 0;
 }
