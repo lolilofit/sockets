@@ -71,6 +71,8 @@ int main(int argc, char* argv[]) {
 		printf("can't create socket\n");
 		return 1;
 	}
+	int broadcastEnable=1;
+	int ret=setsockopt(sc, SOL_SOCKET, SO_BROADCAST, &broadcastEnable, sizeof(broadcastEnable));
 	
 	memset(&adr, '0', sizeof(adr));
 	adr.sin_family = AF_INET;
