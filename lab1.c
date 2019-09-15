@@ -71,9 +71,10 @@ int main(int argc, char* argv[]) {
 		printf("can't create socket\n");
 		return 1;
 	}
+	
 	memset(&adr, '0', sizeof(adr));
 	adr.sin_family = AF_INET;
-	adr.sin_addr.s_addr = inet_addr("");
+	adr.sin_addr.s_addr = inet_addr("10.0.2.15");
 	adr.sin_port = htons(8081);
 
 	memset(&other_adr, '0', sizeof(other_adr));
@@ -81,11 +82,15 @@ int main(int argc, char* argv[]) {
 	other_adr.sin_addr.s_addr = inet_addr("255.255.255.255");
 	other_adr.sin_port = htons(8081);
 	
-	int count = 0;
+	int count = 0, res;
 	bind(sc, (struct sockaddr*)&adr, sizeof(adr));
+	printf("bibd\n");
 	while(1) {
 		char mes[] = "1";
-		sendto(sc, mes, 1, 0, (struct sockaddr*)&other_adr, sizeof(other_adr));
+		res = sendto(sc, mes, 1, 0, (struct sockaddr*)&other_adr, sizeof(other_adr));
+		if(res < 0)
+			printf("erroe sending\n");
+		printf("send\n");
 		count = 0;
 		time_now = time(NULL);
 		while((time(NULL) - time_now) < TIMEOUT) {
@@ -93,6 +98,7 @@ int main(int argc, char* argv[]) {
 				printf("err\n");
 				return 2;
 			}
+			printf("rescv\n");
 			add_adr(tmp, inet_ntoa(other_adr.sin_addr));
 			count++;
 		}
