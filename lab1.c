@@ -8,7 +8,7 @@
 #include<arpa/inet.h>
 #include<string.h>
 
-#define TIMEOUT 10
+#define TIMEOUT 5
 
 struct adresses {
 	char adr[16];
@@ -73,10 +73,10 @@ int main(int argc, char* argv[]) {
 	}
 	int broadcastEnable=1;
 	int ret=setsockopt(sc, SOL_SOCKET, SO_BROADCAST, &broadcastEnable, sizeof(broadcastEnable));
-	struct timeval read_timeout;
-	read_timeout.tv_sec = 0;
-	read_timeout.tv_usec = 10;
-	setsockopt(sc, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
+//	struct timeval read_timeout;
+//	read_timeout.tv_sec = 0;
+//	read_timeout.tv_usec = 10;
+//	setsockopt(sc, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
 
 
 	memset(&adr, '0', sizeof(adr));
@@ -105,11 +105,12 @@ int main(int argc, char* argv[]) {
 		time_now = time(NULL);
 		while((time(NULL) - time_now) < TIMEOUT) {
 			socklen = sizeof(recv);
-			if(recvfrom(sc, buf, strlen(buf)+1, 0, (struct sockaddr*)&recv, &socklen) == -1){
-				printf("err\n");
-				return 2;
-			}
-			printf("rescv\n");
+			if(recvfrom(sc, buf, strlen(buf)+1, MSG_DONTWAIT, (struct sockaddr*)&recv, &socklen) >= 0)
+			//	printf("err\n");
+		//		return 2;
+		//	}
+		//	printf("rescv\n");
+
 			printf("addr is: %s\n", inet_ntoa(recv.sin_addr));
 		//	add_adr(tmp, inet_ntoa(recv.sin_addr));
 			count++;
