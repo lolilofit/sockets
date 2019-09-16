@@ -61,7 +61,7 @@ struct adresses* tmp;
 
 int main(int argc, char* argv[]) {
 	int i, sc, n;
-	struct sockaddr_in adr, other_adr;
+	struct sockaddr_in adr, other_adr, recv;
 	char buf[3];
 	long int time_now;
 	socklen_t socklen;
@@ -73,37 +73,51 @@ int main(int argc, char* argv[]) {
 	}
 	int broadcastEnable=1;
 	int ret=setsockopt(sc, SOL_SOCKET, SO_BROADCAST, &broadcastEnable, sizeof(broadcastEnable));
-	
+	struct timeval read_timeout;
+	read_timeout.tv_sec = 0;
+	read_timeout.tv_usec = 10;
+	setsockopt(sc, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
+
+
 	memset(&adr, '0', sizeof(adr));
 	adr.sin_family = AF_INET;
-	adr.sin_addr.s_addr = inet_addr("10.0.2.15");
-	adr.sin_port = htons(8081);
+//	adr.sin_addr.s_addr = inet_addr("192.168.1.16");
+	adr.sin_addr.s_addr = inet_addr("255.255.255.255");
+	adr.sin_port = htons(1900);
 
 	memset(&other_adr, '0', sizeof(other_adr));
 	other_adr.sin_family = AF_INET;
-	other_adr.sin_addr.s_addr = inet_addr("255.255.255.255");
-	other_adr.sin_port = htons(8081);
-	
+	other_adr.sin_addr.s_addr = inet_addr("192.168.1.7");
+	other_adr.sin_port = htons(1900);
+	memset(&recv, '0', sizeof(recv));
+
 	int count = 0, res;
 	bind(sc, (struct sockaddr*)&adr, sizeof(adr));
 	printf("bibd\n");
 	while(1) {
 		char mes[] = "1";
-		res = sendto(sc, mes, 1, 0, (struct sockaddr*)&other_adr, sizeof(other_adr));
+		res = sendto(sc, mes, strlen(mes)+1, 0, (struct sockaddr*)&other_adr, sizeof(other_adr));
 		if(res < 0)
 			printf("erroe sending\n");
 		printf("send\n");
+
 		count = 0;
 		time_now = time(NULL);
 		while((time(NULL) - time_now) < TIMEOUT) {
-			if(recvfrom(sc, buf, 3, 0, (struct sockaddr*)&other_adr, &socklen) == -1){
+			socklen = sizeof(recv);
+			if(recvfrom(sc, buf, strlen(buf)+1, 0, (struct sockaddr*)&recv, &socklen) == -1){
 				printf("err\n");
 				return 2;
 			}
 			printf("rescv\n");
-			add_adr(tmp, inet_ntoa(other_adr.sin_addr));
+			printf("addr is: %s\n", inet_ntoa(recv.sin_addr));
+		//	add_adr(tmp, inet_ntoa(recv.sin_addr));
 			count++;
+
 		}
+		close(sc);
+		return 0;
+
 		struct adresses* cur = tmp;
 		for(i = 0; i < count; i++) {
 			if(find_adr(list_adr, cur->adr) == 1) {
@@ -119,6 +133,7 @@ int main(int argc, char* argv[]) {
 			cur = cur->next;
 		}
 		printf("------------");
+	
 	}
 	return 0;
 }
