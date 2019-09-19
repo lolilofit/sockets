@@ -39,16 +39,22 @@ struct adresses* add_adr(struct adresses* list, char* buf) {
 }
 
 int find_adr(struct adresses* list, char *adr) {
-	printf("cmp\n");
+//	printf("cmp\n");
 	struct adresses* cur = list;
-	if(cur == NULL)
+	if(cur == NULL) {
+//		printf("null list\n");
 		return 1;
+	}
 	while(cur) {
-		if(strcmp(adr, cur->adr) != 0)
-			return 1;
+//		printf("compare %s %s\n", adr, cur->adr);
+		if(strcmp(adr, cur->adr) == 0) {
+//			printf("deq strings!\n");
+			return 0;
+		}
+//		printf("diff str!\n");
 		cur = cur->next;
 	}
-	return 0;
+	return 1;
 }
 
 void delete_adr(struct adresses* list) {
@@ -64,7 +70,7 @@ void delete_adr(struct adresses* list) {
 	list = NULL;
 }
 
-struct adresses* list_adr;
+struct adresses* list_adr = NULL;
 struct adresses* tmp= NULL;
 
 int main(int argc, char* argv[]) {
@@ -89,13 +95,14 @@ int main(int argc, char* argv[]) {
 
 	memset(&adr, '0', sizeof(adr));
 	adr.sin_family = AF_INET;
-	adr.sin_addr.s_addr = inet_addr("192.168.1.16");
+//	adr.sin_addr.s_addr = inet_addr("192.168.1.16");
+	adr.sin_addr.s_addr = INADDR_ANY;
 	adr.sin_port = htons(1900);
 
 	memset(&other_adr, '0', sizeof(other_adr));
 	other_adr.sin_family = AF_INET;
 	//other_adr.sin_addr.s_addr = inet_addr("255.255.255.255");
-	other_adr.sin_addr.s_addr = inet_addr("192.168.1.7");
+	other_adr.sin_addr.s_addr = inet_addr("192.168.1.255");
 	other_adr.sin_port = htons(1900);
 	memset(&recv, '0', sizeof(recv));
 
@@ -107,7 +114,7 @@ int main(int argc, char* argv[]) {
 		res = sendto(sc, mes, strlen(mes)+1, 0, (struct sockaddr*)&other_adr, sizeof(other_adr));
 		if(res < 0)
 			printf("erroe sending\n");
-		printf("send\n");
+		//printf("send\n");
 
 		count = 0;
 		time_now = time(NULL);
@@ -119,34 +126,61 @@ int main(int argc, char* argv[]) {
 		//		return 2;
 		//	}
 		//	printf("rescv\n");
+		//	printf("addr is: %s\n", inet_ntoa(recv.sin_addr));
+			if(find_adr(tmp, inet_ntoa(recv.sin_addr)))
+				tmp = add_adr(tmp, inet_ntoa(recv.sin_addr));
 
-			printf("addr is: %s\n", inet_ntoa(recv.sin_addr));
-			tmp = add_adr(tmp, inet_ntoa(recv.sin_addr));
-			count++;
+			if(find_adr(list_adr, inet_ntoa(recv.sin_addr))) {
+				printf("add missing to list\n");
+				list_adr = add_adr(list_adr, inet_ntoa(recv.sin_addr));
+				struct adresses* tmp_cur = list_adr;
+				while(tmp_cur) {
+				printf("%s\n", tmp_cur->adr);
+					tmp_cur=tmp_cur->next;
+				}
+			
+			}
+			printf("<---------------->\n");
 			}
 
 		}
+//printf("---->>>>>>>\n");
 //		close(sc);
 //		return 0;
-		printf("find diff\n");
-		struct adresses* cur = tmp;
-		for(i = 0; i < count; i++) {
-			if(cur == NULL) {printf("null cur\n");}
+//		printf("find diff\n");
+//		printf("%%%%%%%%\n");
+		struct adresses* c;
+		//while(c) {
+		//printf("%s\n", c->adr);
+		//c=c->next;
+		//}
+		//printf("^^^^^^^^^^\n");
+		c=list_adr;
+		while(c) {
+			count++;
+			//printf("%s\n", c->adr);
+			c=c->next;
+		}
+		//printf("%%%%%%%%\n");
 
-			if(find_adr(list_adr, cur->adr) == 1) {
+		struct adresses* cur = list_adr;
+		for(i = 0; i < count; i++) {
+		//	printf("compare tmp and %s\n", cur->adr);
+			if(find_adr(tmp, cur->adr) == 1) {
+			//	printf("fout difference\n");
 				i = count + 1;
 				list_adr = tmp;
+				struct adresses* tmp_cur = list_adr;
+				while(tmp_cur) {
+					printf("%s\n", tmp_cur->adr);
+					tmp_cur=tmp_cur->next;
+				}
 			}
 			cur = cur->next;
 		}
-		printf("delete old\n");
 		delete_adr(tmp);
-		cur = list_adr;
-		while(cur) {
-			printf(cur->adr);
-			cur = cur->next;
-		}
-		printf("------------");
+
+		printf("------------\n");
 	
 	}
 	return 0;
